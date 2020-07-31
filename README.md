@@ -22,6 +22,16 @@ Based on user's inputs to the above questions the information will be displayed 
 Script file: bikeshare.py
 Data files: chicago.csv, washington.csv, new_york_city.csv
 
+### Instructions on how to develop, use and test the code
+To get detailed analysis of :bike: share data the user will need to run bikeshare.py file
+For the project to run below are the requirements:
+1. Python 3, NumPy and Pandas installed using [Anaconda](https://www.anaconda.com/products/individual#windows)
+2. Text editor like [Sublime](https://www.sublimetext.com/) or [Atom](https://atom.io/)
+3. A terminal application
+
+
+
+
 ### Credits
 [Markdown](https://guides.github.com/features/mastering-markdown/)
 [Markdown_Atom](https://github.com/atom/markdown-preview)
