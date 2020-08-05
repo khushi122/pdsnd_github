@@ -1,11 +1,11 @@
 import time
 import pandas as pd
-import numpy as np
+#import numpy as np
 
 CITY_DATA = {'chicago': 'chicago.csv',
               'new york': 'new_york_city.csv',
               'washington': 'washington.csv'}
-MONTHS = ['january', 'february', 'march', 'april', 'may', 'june']
+MONTHS = ['January', 'February', 'March', 'April', 'May', 'June']
 DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 def validate_city(city):
@@ -24,7 +24,7 @@ def validate_month(month):
     Returns:
         (str) month - name of the month to filter by
     """
-    while month.lower() not in MONTHS:
+    while month.title() not in MONTHS:
         print('Oops! That is not a valid month')
         month = input('Please enter for which month: January, February, March, April, May, June\n')
     return month
@@ -99,11 +99,13 @@ def load_data(city,month,day):
     df = pd.read_csv(CITY_DATA[city.lower()])
     # convert Start Time column to datetime
     df['Start Time'] = pd.to_datetime(df['Start Time'])
+    # convert End Time column to to_datetime
+    df['End Time'] = pd.to_datetime(df['End Time'])
     # Create new column for month
     df['month'] = df['Start Time'].dt.month
     if month != '':
         # convert user input to equivalent month number
-        month = MONTHS.index(month.lower()) + 1
+        month = MONTHS.index(month.title()) + 1
         # filter dataframe based on user input month
         df = df.loc[df['month'] == month]
     # create new day column
@@ -113,6 +115,18 @@ def load_data(city,month,day):
         # filter dataframe based on user input day_name
         df = df.loc[df['day_of_week'] == day.title()]
     return df
+
+def loc_stats(var, col_name):
+    start_time = time.time()
+    location = var.value_counts().idxmax()
+    if col_name == 'month':
+        print('\nMost popular month: {}'.format(MONTHS[location - 1]))
+        print('Number of trips: {}'.format(var.value_counts().max()))
+        print('Execution time:', (time.time() - start_time))
+    else:
+        print('\nMost popular {}: {}'.format(col_name, location))
+        print('Number of trips: {}'.format(var.value_counts().max()))
+        print('Execution time:', (time.time() - start_time))
 
 def time_stats(df, timeframe):
     """
@@ -124,27 +138,13 @@ def time_stats(df, timeframe):
     """
     print('\nCalculating time statistics')
 
-    start_time = time.time()
-    df['hour'] = df['Start Time'].dt.hour
-    popular_hour = df['hour'].value_counts().idxmax()
-    print('\nMost popular Start hour: {}'.format(popular_hour))
-    print('Number of trips started at most popular hour: {}'.format(df['hour'].value_counts().max()))
-    print('Execution time:', (time.time() - start_time))
+    df['start_hour'] = df['Start Time'].dt.hour
+    loc_stats(df['start_hour'], 'start hour')
 
-    start_time = time.time()
-    if timeframe == 'none' or timeframe == 'day':
-        popular_month = df['month'].value_counts().idxmax()
-        popular_month = MONTHS[popular_month - 1].title()
-        print('\nMost popular month: {}'.format(popular_month))
-        print('Number of trips made during the most popular month: {}'.format(df['month'].value_counts().max()))
-        print('Execution time:', (time.time() - start_time))
-
-    start_time = time.time()
     if timeframe == 'none' or timeframe == 'month':
-        popular_day = df['day_of_week'].value_counts().idxmax()
-        print('\nMost popular day: {}'.format(popular_day))
-        print('Number of trips made on the most popular day of the week: {}'.format(df['day_of_week'].value_counts().max()))
-        print('Execution time:', (time.time() - start_time))
+        loc_stats(df['day_of_week'], 'day')
+    if timeframe == 'none' or timeframe == 'day':
+        loc_stats(df['month'], 'month')
 
     start_time = time.time()
     trip_duration = df['Trip Duration'].sum()
@@ -162,24 +162,10 @@ def station_stats(df):
     """
     print('\nCalculating location statistics')
 
-    start_time = time.time()
-    popular_start_station = df['Start Station'].value_counts().idxmax()
-    print('\nMost commonly used start station is: {}'.format(popular_start_station))
-    print('Number of trips started from the most popular start station: {}'.format(df['Start Station'].value_counts().max()))
-    print('Execution time:', (time.time() - start_time))
-
-    start_time = time.time()
-    popular_end_station = df['End Station'].value_counts().idxmax()
-    print('\nMost commonly used end station is: {}'.format(popular_end_station))
-    print('Number of trips ended at the most popular end station: {}'.format(df['End Station'].value_counts().max()))
-    print('Execution time:', (time.time() - start_time))
-
-    start_time = time.time()
-    df['trip'] = df['Start Station'] + ' and ' + df['End Station']
-    popular_trip = df['trip'].value_counts().idxmax()
-    print('\nMost trips are made between {}'.format(popular_trip))
-    print('Number of the most popular trips: {}'.format(df['trip'].value_counts().max()))
-    print('Execution time:', (time.time() - start_time))
+    loc_stats(df['Start Station'], 'start station')
+    loc_stats(df["End Station"], 'end station')
+    df['trip'] = df['Start Station'] + ' to ' + df['End Station']
+    loc_stats(df['trip'], 'trip')
 
 def user_stats(df,city):
     """
@@ -211,7 +197,6 @@ def user_stats(df,city):
         print('Execution time:', (time.time() - start_time))
 
         start_time = time.time()
-        # find the most recent year of birth
         latest_birth_year = df['Birth Year'].max()
         print('\nThe most recent year of birth is:', latest_birth_year)
         # number of users with the most recent year of Birth
@@ -221,10 +206,7 @@ def user_stats(df,city):
 
         start_time = time.time()
         # find the most common year of birth
-        most_common_birth_year = df['Birth Year'].value_counts().idxmax()
-        print('\nThe most common year of birth:', most_common_birth_year)
-        print('Number of users with the most common year of birth:', df['Birth Year'].value_counts().max())
-        print('Execution time:', (time.time() - start_time))
+        loc_stats(df['Birth Year'], 'birth year')
 
 def load_raw_data(city,counter):
     """
@@ -253,16 +235,6 @@ def valid_input(raw_data):
         raw_data = input('Would you like to see raw data? Please enter "yes" or "no"\n')
     return raw_data
 
-#raw_data = input('\nWould you like to see raw data? Type "yes" or "no"\n')
-#raw_data = valid_input(raw_data)
-#counter = 0
-#while raw_data == 'yes':
-#    load_raw_data(city, counter)
-#    counter += 5
-#    raw_data = input('\nWould you like to see next 5 rows of raw data? yes or no\n')
-#    raw_data = valid_input(raw_data)
-
-
 def main():
     while True:
         city, month, day, timeframe = get_filters()
@@ -270,7 +242,6 @@ def main():
 
         time_stats(df, timeframe)
         station_stats(df)
-        #trip_duration_stats(df)
         user_stats(df, city)
         raw_data = valid_input(input('\nWould you like to see raw data? Type "yes" or "no"\n'))
         counter = 0
@@ -283,7 +254,6 @@ def main():
         restart = input('\nWould you like to restart? Enter yes or no.\n')
         if restart.lower() != 'yes':
             break
-
 
 if __name__ == "__main__":
 	main()
